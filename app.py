@@ -220,7 +220,7 @@ st.markdown('<h1 class="main-header">Credit Card Fraud Detection System</h1>', u
 
 # Create sidebar for additional information
 with st.sidebar:
-    st.image("img\O_logo.png", width=100)
+    st.image("img/logo_app.png", width=100)
     st.markdown("## About")
     st.info(
         "This application uses AI and Data science models to detect potentially " 
