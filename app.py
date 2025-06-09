@@ -44,6 +44,7 @@ st.markdown("""
     .info-text {
         font-size: 1rem;
     }
+     
 </style>
 """, unsafe_allow_html=True)
 
@@ -51,7 +52,7 @@ st.markdown("""
 @st.cache_resource
 def load_model():
     try:
-        model_path = 'optimized_model_09.pkl'
+        model_path = 'optimized_model_v1.1.pkl'
         
         if os.path.exists(model_path):
             model_data = joblib.load(model_path)
@@ -183,13 +184,11 @@ def display_result(analysis_result):
     if predicted_fraud:
         st.markdown('<div class="result-box fraud">', unsafe_allow_html=True)
         st.error("⚠️ **Potential Fraud Detected!**")
-        st.write(f"Fraud Score: {fraud_score:.4f}")
         st.write("This transaction has been flagged as potentially fraudulent and should be reviewed.")
         st.markdown('</div>', unsafe_allow_html=True)
     else:
         st.markdown('<div class="result-box legitimate">', unsafe_allow_html=True)
         st.success("✅ **Transaction Appears Legitimate**")
-        st.write(f"Fraud Score: {fraud_score:.4f}")
         st.write("This transaction appears to be legitimate based on our analysis.")
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -224,8 +223,8 @@ with st.sidebar:
     st.image("img\O_logo.png", width=100)
     st.markdown("## About")
     st.info(
-        "This application uses rule-based analysis to detect potentially fraudulent "
-        "credit card transactions based on customer ID and transaction amount."
+        "This application uses AI and Data science models to detect potentially " 
+        "fraudulent credit card transactions based on customer ID and transaction amount."
     )
     
     st.markdown("## How It Works")
@@ -236,11 +235,7 @@ with st.sidebar:
         "4. The system will analyze the data and provide a fraud assessment"
     )
     
-    st.markdown("## Disclaimer")
-    st.warning(
-        "This is a demonstration application. In a real-world scenario, "
-        "many more factors would be used to determine fraud probability."
-    )
+
 
 # Create two columns for the input form
 col1, col2 = st.columns(2)
@@ -250,34 +245,13 @@ with st.container():
     st.markdown('<h2 class="sub-header">Transaction Details</h2>', unsafe_allow_html=True)
     
     with col1:
-        customer_id = st.number_input("Customer ID", min_value=1, value=1042, help="Enter the customer's unique identifier")
+        customer_id = st.number_input("Customer ID", min_value=0, help="Enter the customer's unique identifier")
     
     with col2:
-        amount = st.number_input("Transaction Amount ($)", min_value=0.01, value=150.00, step=10.0, format="%.2f", help="Enter the transaction amount")
+        amount = st.number_input("Transaction Amount ($)", min_value=0.00, step=10.0, format="%.2f", help="Enter the transaction amount")
 
     # Additional transaction details that could be collected in a real app
-    with st.expander("Additional Transaction Details (Optional)"):
-        st.selectbox("Transaction Type", ["Online Purchase", "In-store Purchase", "ATM Withdrawal", "Money Transfer"])
-        st.text_input("Merchant Name")
-        st.text_input("Merchant Category")
-        country = st.selectbox("Country", ["United States", "Canada", "United Kingdom", "Other"])
-        if country == "Other":
-            st.text_input("Specify Country")
-
-# Debug section (can be toggled)
-with st.expander("Debug Information"):
-    if st.button("Test Model Loading"):
-        model_data = load_model()
-        st.write(f"Model type: {type(model_data)}")
-        if isinstance(model_data, dict):
-            st.write(f"Threshold: {model_data.get('threshold', 'Not found')}")
-            if 'customer_stats_overall' in model_data:
-                st.write(f"Customer stats shape: {model_data['customer_stats_overall'].shape}")
-                st.dataframe(model_data['customer_stats_overall'].head())
-            else:
-                st.write("No customer stats available")
-        else:
-            st.write("Model is not in dictionary format")
+   
 
 # Submit button
 if st.button("Check Transaction", type="primary", use_container_width=True):
@@ -329,14 +303,6 @@ if st.button("Check Transaction", type="primary", use_container_width=True):
         else:
             st.success("No risk indicators detected.")
         
-        # Fraud score details
-        st.write("**Fraud Score Analysis:**")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Fraud Score", f"{analysis_result['fraud_score']:.4f}")
-        with col2:
-            st.metric("Threshold", f"{analysis_result['threshold']:.4f}")
-            
         # Recommendation based on the prediction
         if analysis_result['predicted_fraud']:
             st.markdown("### Recommended Actions")
@@ -348,70 +314,32 @@ if st.button("Check Transaction", type="primary", use_container_width=True):
             """)
         else:
             # Show a recent transactions table for context (mock data)
-            st.markdown("### Recent Transactions History")
+            st.markdown("")
            
+footer_style = """
+    <style>
+        footer {
+            visibility: hidden;
+        }
+        .footer {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            background-color: dark;
+            text-align: center;
+            padding: 10px;
+            font-size: 18px;
+        }
+    </style>
+    <div class="footer">
+        © 2025 OrbiDefence
+    </div>
+"""
 
-# Add command-line mode simulation
-with st.expander("Command Line Mode"):
-    st.markdown("### Command Line Simulation")
-    st.write("This section simulates the command-line version of the tool")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        cli_customer_id = st.number_input("CLI Customer ID", min_value=1, value=1042, key="cli_cust_id")
-    with col2:
-        cli_amount = st.number_input("CLI Amount ($)", min_value=0.01, value=150.00, step=10.0, format="%.2f", key="cli_amount")
-    
-    if st.button("Run CLI Analysis", key="cli_button"):
-        # Load model
-        model_data = load_model()
-        
-        # Run analysis
-        analysis_result = analyze_transaction(cli_customer_id, cli_amount, model_data)
-        
-        # Display CLI-style output
-        st.markdown("```")
-        st.write("=" * 60)
-        st.write(f"TRANSACTION ANALYSIS RESULT")
-        st.write("=" * 60)
-        
-        st.write(f"\nCustomer ID: {cli_customer_id}")
-        st.write(f"Amount: ${cli_amount:.2f}")
-        
-        if analysis_result['customer_stats']['transaction_count'] > 0:
-            st.write("\nCustomer History:")
-            st.write(f"  Previous Transactions: {int(analysis_result['customer_stats']['transaction_count'])}")
-            st.write(f"  Average Amount: ${analysis_result['customer_stats']['avg_amount']:.2f}")
-            st.write(f"  Maximum Amount: ${analysis_result['customer_stats']['max_amount']:.2f}")
-            if analysis_result['amount_to_avg_ratio']:
-                st.write(f"  Amount/Avg Ratio: {analysis_result['amount_to_avg_ratio']:.2f}")
-            if analysis_result['amount_to_max_ratio']:
-                st.write(f"  Amount/Max Ratio: {analysis_result['amount_to_max_ratio']:.2f}")
-        else:
-            st.write("\nNo transaction history for this customer.")
-        
-        st.write("\nFraud Analysis:")
-        if analysis_result['fraud_indicators']:
-            st.write("Risk indicators:")
-            for indicator in analysis_result['fraud_indicators']:
-                st.write(f"  • {indicator}")
-        else:
-            st.write("  No risk indicators detected")
-        
-        st.write(f"\nFraud Score: {analysis_result['fraud_score']:.4f}")
-        st.write(f"Threshold: {analysis_result['threshold']:.4f}")
-        
-        if analysis_result['predicted_fraud']:
-            st.write("\n⚠️  FRAUD ALERT! This transaction is likely fraudulent.")
-        else:
-            st.write("\n✓ LEGITIMATE TRANSACTION")
-        
-        st.write("\n" + "=" * 60)
-        st.markdown("```")
+# Inject CSS with Streamlit
+st.markdown(footer_style, unsafe_allow_html=True)
 
-# Footer
-st.markdown("---")
-st.markdown(
-        "<p style='text-align: center;'>© 2025 OrbiDefence</p>",
-    unsafe_allow_html=True
-)
+   
+
+
